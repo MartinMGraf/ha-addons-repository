@@ -1,0 +1,11 @@
+name: Azure Backup
+version: 2025.08.98
+slug: ha-addon-azure-backup
+description: "Perform a full backup of Home Assistant and store it in Azure Blob Storage."
+arch:
+- aarch64
+init: false
+watchdog: http://[HOST]:[PORT:5000]/livez
+homeassistant_api: true
+hassio_api: true
+image: ghcr.io/martinmgraf/ha-addon-azure-backup

@@ -1,0 +1,10 @@
+name: Škoda Enyaq
+version: 2025.08.99
+slug: ha-addon-skoda-enyaq
+description: "Reads the current battery's state of charge (SoC) from the vehicle."
+arch:
+- aarch64
+init: false
+watchdog: http://[HOST]:[PORT:5000]/livez
+homeassistant_api: true
+image: ghcr.io/martinmgraf/ha-addon-skoda-enyaq
