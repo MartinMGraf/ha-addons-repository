@@ -1,9 +1,5 @@
-# This workflow defines a CI pipeline for building, packaging, and releasing .NET applications
-# and container images for Home Assistant add-ons.
-
 name: CI Pipeline
 
-# Define when the workflow is triggered
 on:
   workflow_dispatch:
     inputs:
@@ -26,28 +22,24 @@ on:
           - 'ha-addon-skoda-enyaq'
           - 'ha-addon-azure-backup'
 
-# Define required permissions for the workflow
 permissions:
   contents: write    
   packages: write
 
 jobs:
   release-job:
-    # Job outputs for later use in dependent jobs
     outputs:
      release_id: ${{ steps.create_release.outputs.id }}
      version: ${{ steps.version.outputs.version }} 
     runs-on: ubuntu-latest
     steps:
-      - name: Generate version
+      - name: Generate version string
         id: version
-        # Generate a version number based on year.month + GitHub run number
         run: |
           echo "version=$(date +'%Y.%m').${{ github.run_number }}" >> $GITHUB_OUTPUT    
 
-      - name: Create GitHub Release
+      - name: Create draft GitHub release
         id: create_release
-        # Create a draft GitHub release with the generated version
         uses: softprops/action-gh-release@v2
         with:
           tag_name: release-v${{ steps.version.outputs.version }}
@@ -56,10 +48,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: echo "Release ID is ${{ steps.create_release.outputs.id }} ${{ steps.create_release.outputs.url }}"
+      - name: Print release information
+        run: echo "Release ID is ${{ steps.create_release.outputs.id }} ${{ steps.create_release.outputs.url }}"
 
   container-job:
-    # This job builds the .NET project into a release artifact (ZIP)
     runs-on: ubuntu-24.04-arm
     needs: release-job
     outputs:
@@ -67,20 +59,22 @@ jobs:
     container:
       image: mcr.microsoft.com/dotnet/sdk:9.0-alpine-arm64v8
     steps:
-     # Install required build dependencies
-     - run: apk update && apk add --no-cache clang build-base zlib-dev curl zip jq
-     # Clone the repository using GitHub token
-     - run: git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/MartinMGraf/${{github.event.inputs.repository_name}}.git
-     # Publish the .NET project for linux-arm64 as a self-contained build
-     - run: dotnet publish ${{github.event.inputs.csproj_path}} --runtime linux-musl-arm64 --self-contained true -c Debug -o /release
-     - name: Zip published files  
-       # Package the published output into a ZIP file
+     - name: Install build dependencies
+       run: apk update && apk add --no-cache clang build-base zlib-dev curl zip jq
+
+     - name: Clone repository
+       run: git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/MartinMGraf/${{github.event.inputs.repository_name}}.git
+
+     - name: Publish .NET project
+       run: dotnet publish ${{github.event.inputs.csproj_path}} --runtime linux-musl-arm64 --self-contained true -c Debug -o /release
+
+     - name: Package release as ZIP
        run: |
          cd /release
          zip -r ../release.zip .        
-     - name: Upload ZIP to GitHub Release
+
+     - name: Upload ZIP asset to release
        id: upload_asset
-       # Upload the ZIP artifact to the previously created GitHub release
        run: |
           response=$(curl -s -X POST \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
@@ -90,70 +84,26 @@ jobs:
         
           url=$(echo "$response" | jq -r '.url')
           echo "Upload URL: $url"
-        
-          # Expose uploaded asset URL as job output
           echo "asset_url=$url" >> $GITHUB_OUTPUT
 
   docker-job:
-    # This job builds and pushes the Docker image for the add-on
     runs-on: ubuntu-latest
     needs: [container-job, release-job]
     steps:
-    - name: Checkout source
-      # Checkout repository using SSH key
+    - name: Checkout source repository
       uses: actions/checkout@v4
       with:
         ssh-key:  ${{ secrets.GH_SSH }}      
 
-    - run: |
-        # Download the previously uploaded release ZIP
+    - name: Download and clean up release artifact
+      run: |
         curl -L -H "Accept: application/octet-stream" \
          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
          ${{ needs.container-job.outputs.asset_url }} \
          -o release.zip
-        # Delete the draft GitHub release after downloading the asset
         curl -L -X DELETE -H "Accept: application/vnd.github+json" \
          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
          https://api.github.com/repos/${{ github.repository_owner }}/${{ github.event.repository.name }}/releases/${{needs.release-job.outputs.release_id}}
 
     - name: Set up Docker Buildx
-      # Enable multi-platform Docker builds
       uses: docker/setup-buildx-action@v3
-
-    - name: Unzip release.zip
-      # Extract published app into the rootfs directory of the add-on
-      run: |
-        mkdir ./${{github.event.inputs.repository_name}}/rootfs/app
-        unzip release.zip -d ./${{github.event.inputs.repository_name}}/rootfs/app
-
-    - name: Login to GitHub Container Registry
-      # Authenticate to GitHub Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Build and push Docker image
-      # Build and push Docker image for the add-on with the release version as tag
-      uses: docker/build-push-action@v5
-      with:
-        context: ./${{github.event.inputs.repository_name}}
-        file: .github/workflows/Dockerfile
-        platforms: linux/arm64
-        push: true
-        tags: ghcr.io/martinmgraf/${{github.event.inputs.repository_name}}:${{ needs.release-job.outputs.version }}
-
-    - name: Update version in config.yaml
-      # Update the add-on config.yaml with the new release version
-      run: |
-        sed -i "s/^version: .*/version: ${{ needs.release-job.outputs.version }}/" ${{github.event.inputs.repository_name}}/config.yaml
-
-    - name: Commit & push changes
-      # Commit updated config.yaml and push changes to the main branch
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add ${{github.event.inputs.repository_name}}/config.yaml
-        git commit -m "Update version to ${{ needs.release-job.outputs.version }}"
-        git push origin main
