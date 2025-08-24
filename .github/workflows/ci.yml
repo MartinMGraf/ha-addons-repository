@@ -1,10 +1,12 @@
+# This workflow defines a CI pipeline for building, packaging, and releasing .NET applications
+# and container images for Home Assistant add-ons.
 name: CI Pipeline
 
 on:
   workflow_dispatch:
     inputs:
       csproj_path:
-        description: 'Path to the csproj file'
+        description: 'Path to the csproj file in repository'
         required: true
         type: choice
         options:
@@ -47,10 +49,6 @@ jobs:
           draft: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Print release information
-        run: echo "Release ID is ${{ steps.create_release.outputs.id }} ${{ steps.create_release.outputs.url }}"
-
   container-job:
     runs-on: ubuntu-24.04-arm
     needs: release-job
@@ -73,7 +71,7 @@ jobs:
          cd /release
          zip -r ../release.zip .        
 
-     - name: Upload ZIP asset to release
+     - name: Upload release.zip to GitHub release
        id: upload_asset
        run: |
           response=$(curl -s -X POST \
@@ -83,7 +81,6 @@ jobs:
             "https://uploads.github.com/repos/${{ github.repository_owner }}/${{ github.event.repository.name }}/releases/${{needs.release-job.outputs.release_id}}/assets?name=release.zip")
         
           url=$(echo "$response" | jq -r '.url')
-          echo "Upload URL: $url"
           echo "asset_url=$url" >> $GITHUB_OUTPUT
 
   docker-job:
@@ -107,3 +104,31 @@ jobs:
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
+    - name: Unzip release.zip
+      run: |
+        mkdir ./${{github.event.inputs.repository_name}}/rootfs/app
+        unzip release.zip -d ./${{github.event.inputs.repository_name}}/rootfs/app
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build and push Docker image for the addon with the release version as tag
+      uses: docker/build-push-action@v5
+      with:
+        context: ./${{github.event.inputs.repository_name}}
+        file: .github/workflows/Dockerfile
+        platforms: linux/arm64
+        push: true
+        tags: ghcr.io/martinmgraf/${{github.event.inputs.repository_name}}:${{ needs.release-job.outputs.version }}
+    - name: Update the addon config.yaml with the new release version
+      run: |
+        sed -i "s/^version: .*/version: ${{ needs.release-job.outputs.version }}/" ${{github.event.inputs.repository_name}}/config.yaml
+    - name: Commit updated config.yaml and push changes to the main branch
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add ${{github.event.inputs.repository_name}}/config.yaml
+        git commit -m "Update version to ${{ needs.release-job.outputs.version }}"
+        git push origin main
