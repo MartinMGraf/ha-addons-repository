@@ -9,4 +9,6 @@ watchdog: http://[HOST]:[PORT:5000]/livez
 homeassistant_api: true
 hassio_api: true
 hassio_role: admin
+ports:
+  - 5000/tcp:5000
 image: ghcr.io/martinmgraf/ha-addon-skoda-enyaq
