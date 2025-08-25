@@ -7,4 +7,5 @@ arch:
 init: false
 watchdog: http://[HOST]:[PORT:5000]/livez
 homeassistant_api: true
+hassio_api: true
 image: ghcr.io/martinmgraf/ha-addon-skoda-enyaq
