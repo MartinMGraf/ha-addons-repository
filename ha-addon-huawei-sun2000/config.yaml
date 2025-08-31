@@ -1,5 +1,5 @@
 name: Huawei SUN2000 Inverter
-version: 2025.08.116
+version: 2025.08.119
 slug: ha-addon-huawei-sun2000
 description: "Reads the current power generation data and the battery's state of charge (SoC) from the inverter."
 arch:
