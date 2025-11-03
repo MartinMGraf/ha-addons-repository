@@ -1,5 +1,5 @@
 name: alpha innotec Heatpump
-version: 2025.11.143
+version: 2025.11.144
 slug: ha-addon-ait-heatpump
 description: "Read heating data (mainly temperatures) and set configurations."
 arch:
