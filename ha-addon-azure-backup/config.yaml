@@ -1,5 +1,5 @@
 name: Azure Backup
-version: 2025.11.153
+version: 2025.11.157
 slug: ha-addon-azure-backup
 description: "Perform a full backup of Home Assistant and store it in Azure Blob Storage."
 arch:
