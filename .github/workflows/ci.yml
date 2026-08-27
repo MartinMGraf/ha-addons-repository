@@ -63,7 +63,7 @@ jobs:
      - name: Clone repository
        run: git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/MartinMGraf/${{github.event.inputs.repository_name}}.git
      - name: Publish .NET project
-       run: dotnet publish ${{github.event.inputs.csproj_path}} --runtime linux-musl-arm64 --self-contained true -c Debug -o /release
+       run: dotnet publish ${{github.event.inputs.csproj_path}} --runtime linux-musl-arm64 --self-contained true -c Release -o /release
      - name: Package release as ZIP
        run: |
          cd /release
@@ -97,7 +97,7 @@ jobs:
          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
          https://api.github.com/repos/${{ github.repository_owner }}/${{ github.event.repository.name }}/releases/${{needs.release-job.outputs.release_id}}
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v4
+      uses: docker/setup-buildx-action@v6
     - name: Unzip release.zip
       run: |
         mkdir ./${{github.event.inputs.repository_name}}/rootfs/app
