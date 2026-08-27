@@ -8,7 +8,3 @@ init: false
 watchdog: http://[HOST]:[PORT:5000]/livez
 homeassistant_api: true
 image: ghcr.io/martinmgraf/ha-addon-huawei-sun2000
-options:
-  inverter_host: "192.168.179.17"
-schema:
-  inverter_host: str
