@@ -1,5 +1,5 @@
 name: Redis POC
-version: 7
+version: 8
 slug: redis-poc
 description: "Redis POC."
 startup: system
