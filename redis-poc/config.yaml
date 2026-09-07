@@ -1,0 +1,12 @@
+name: Redis POC
+version: "7"
+slug: redis-poc
+description: "Redis POC."
+startup: system
+legacy: true
+arch:
+- aarch64
+init: false
+ports:
+- 6379/tcp: 6379
+image: docker.io/redis
