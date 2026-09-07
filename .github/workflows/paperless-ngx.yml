@@ -34,7 +34,9 @@ jobs:
       - name: Read add-on version
         id: addon
         shell: bash
-        run: echo "version=$(sed -n 's/^version: *//p' paperless-ngx/config.yaml)" >> "$GITHUB_OUTPUT"
+        run: |
+          version=$(sed -n 's/^version: *//p' paperless-ngx/config.yaml)
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push Paperless-ngx image
         uses: docker/build-push-action@v6
