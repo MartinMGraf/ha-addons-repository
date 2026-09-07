@@ -51,4 +51,4 @@ PY
 fi
 export PAPERLESS_SECRET_KEY="$(<"${secret_file}")"
 
-exec /sbin/init
+exec /sbin/docker-init
