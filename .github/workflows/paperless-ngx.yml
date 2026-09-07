@@ -9,6 +9,7 @@ on:
       - .github/workflows/paperless-ngx.yml
   workflow_dispatch:
 
+
 permissions:
   contents: read
   packages: write
