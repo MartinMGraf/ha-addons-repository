@@ -17,4 +17,4 @@ options:
 schema:
   skoda_api_key: password
   skoda_vehicle_vin: str(17,17)
-  skoda_polling_interval_minutes: int(5)
+  skoda_polling_interval_minutes: int(5,)
