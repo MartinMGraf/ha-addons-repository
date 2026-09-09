@@ -9,19 +9,12 @@ watchdog: http://[HOST]:[PORT:5000]/livez
 services:
  - mqtt:need
 image: ghcr.io/martinmgraf/ha-addon-skoda-enyaq
-config:
-  skoda_api_key:
-    description: "API key for Skoda Connect API authentication"
-    example: "msk_cd1..."
-  skoda_vehicle_vin:
-    description: "Vehicle Identification Number (VIN) of the vehicle to monitor"
-    example: "TMB..."
-  skoda_polling_interval_minutes:
-    description: "Polling interval in minutes (minimum 5 due to API rate limiting)"
-    example: 5
-    type: integer
 
+options:
+  skoda_api_key:
+  skoda_vehicle_vin:
+  skoda_polling_interval_minutes:
 schema:
-  skoda_api_key: str
-  skoda_vehicle_vin: str
-  skoda_polling_interval_minutes: int(5,)
+  skoda_api_key: password
+  skoda_vehicle_vin: str(17,17)
+  skoda_polling_interval_minutes: int(5)

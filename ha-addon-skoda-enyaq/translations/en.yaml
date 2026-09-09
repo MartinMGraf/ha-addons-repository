@@ -1,0 +1,10 @@
+configuration:
+  skoda_api_key:
+    name: "Api Key"
+    description: "API key for Skoda Connect API authentication"
+  skoda_vehicle_vin:
+    name: "VIN"
+    description: "Vehicle Identification Number (VIN) of the vehicle to monitor"
+  skoda_polling_interval_minutes:
+    name: "Polling interval"
+    description: "Polling interval in minutes (minimum 5 due to API rate limiting)"
