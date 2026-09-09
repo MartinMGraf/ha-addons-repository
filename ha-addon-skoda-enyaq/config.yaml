@@ -1,5 +1,5 @@
 name: Škoda Enyaq
-version: 2026.09.174
+version: 2026.09.176
 slug: ha-addon-skoda-enyaq
 description: "Reads the current battery's state of charge (SoC) from the vehicle."
 arch:
