@@ -6,23 +6,16 @@ arch:
 - aarch64
 init: false
 watchdog: http://[HOST]:[PORT:5000]/livez
-homeassistant_api: true
-hassio_api: true
 services:
  - mqtt:need
 image: ghcr.io/martinmgraf/ha-addon-skoda-enyaq
-# Configuration options
 config:
-  # Skoda API Configuration
   skoda_api_key:
     description: "API key for Skoda Connect API authentication"
-    example: "your-skoda-api-key"
+    example: "msk_cd1..."
   skoda_vehicle_vin:
     description: "Vehicle Identification Number (VIN) of the vehicle to monitor"
-    example: "TMBJH9NY5TF024232"
-  skoda_api_base_url:
-    description: "Base URL for the Skoda API"
-    example: "https://public.api.connect.skoda-auto.cz/api/v1"
+    example: "TMB..."
   skoda_polling_interval_minutes:
     description: "Polling interval in minutes (minimum 5 due to API rate limiting)"
     example: 5
@@ -31,5 +24,4 @@ config:
 schema:
   skoda_api_key: str
   skoda_vehicle_vin: str
-  skoda_api_base_url: url
   skoda_polling_interval_minutes: int(5,)
